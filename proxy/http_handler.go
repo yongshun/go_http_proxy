@@ -10,6 +10,7 @@ import (
     "net/http"
     "fmt"
     "io"
+    "github.com/yongshun/go_http_proxy/auth"
 )
 
 func copyHeaders(dst, src http.Header) {
@@ -44,6 +45,16 @@ func removeProxyHeaders(request *http.Request) {
     request.Header.Del("Connection")
 }
 
+func handleAuth(writer http.ResponseWriter, clientRequest *http.Request, proxy *ProxyHttpServer) bool {
+    if proxy.auth != nil {
+        if !proxy.auth.CheckAuth(clientRequest) {
+            doResponse(writer, auth.BuildBasicUnauthorized(clientRequest, "proxy_realm"))
+            return false
+        }
+    }
+    return true
+}
+
 func handleHttpProxy(writer http.ResponseWriter, clientRequest *http.Request, proxy *ProxyHttpServer) {
     // http 代理
     if !clientRequest.URL.IsAbs() {
@@ -69,6 +80,10 @@ func handleHttpProxy(writer http.ResponseWriter, clientRequest *http.Request, pr
 
     response, _ = proxy.transport.RoundTrip(clientRequest)
 
+    doResponse(writer, response)
+}
+
+func doResponse(writer http.ResponseWriter, response *http.Response) {
     copyHeaders(writer.Header(), response.Header)
     writer.WriteHeader(response.StatusCode)
     io.Copy(writer, response.Body)

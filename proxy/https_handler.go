@@ -56,7 +56,6 @@ func handleHttpsProxy(writer http.ResponseWriter, clientRequest *http.Request, p
     // 4. 当代理服务器与远端服务器连接上后, 代理服务器会给客户端回复200, 表示 http 隧道建立成功.
     proxyClientConnect.Write([]byte("HTTP/1.0 200 OK\r\n\r\n"))
 
-
     // 5. 当 http 隧道建立成功后, 代理服务器的工作就是将远端服务器和客户端之间的数据相互转发.
     tTargetSiteConnect := targetSiteConnect.(*net.TCPConn)
     tProxyClientConnect := proxyClientConnect.(*net.TCPConn)
